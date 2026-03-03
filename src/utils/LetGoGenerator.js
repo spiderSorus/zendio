@@ -75,19 +75,15 @@ export const ComplexityBackground = (scene, config = {}) => {
 
     // 3. Generate layers with staggered parallax
     const cameraConfigs = [];
-    const fonts = ['Sedgwick Ave Display', 'serif', 'sans-serif', 'monospace', 'cursive'];
 
     layerTemplates.forEach((t, i) => {
         const layerName = `bg_shuffled_${i+1}`;
-        const pFactor = 0.1 + (i * 0.08); // Spread parallax from 0.1 to 0.74
+        const pFactor = 0.1 + (i * 0.08); 
 
-        // Decrease alpha as we get to "higher" layers (higher i)
-        // Adjust scaling so the top layer (i = length-1) ends up at exactly 0.25 alpha
         let finalAlpha;
         if (i === layerTemplates.length - 1) {
-            finalAlpha = 0.25; // Top layer at exactly 25%
+            finalAlpha = 0.25; 
         } else {
-            // Scale from 1.0 down to ~0.4 over the other layers, then applied to template alpha
             const alphaScale = 1.0 - (i * 0.075); 
             finalAlpha = t.a * alphaScale;
         }
@@ -112,13 +108,13 @@ export const ComplexityBackground = (scene, config = {}) => {
                 const x = Phaser.Math.Between(-worldW/2, worldW/2);
                 const y = Phaser.Math.Between(-worldH/2, worldH/2);
                 const fontSize = Phaser.Math.Between(40, 150);
-                const font = Phaser.Utils.Array.GetRandom(fonts);
 
                 const gfx = new CloudTextGraphic(scene, {
                     x, y,
                     text: 'let go', 
                     fontSize: `${fontSize}px`, 
-                    fontFamily: font, 
+                    fontFamily: 'Caveat', 
+ 
                     color: '#ffffff',
                     alpha: 0.4,
                     parallax: pFactor,

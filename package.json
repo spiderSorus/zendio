@@ -5,11 +5,13 @@
   "main": "src/main.js",
   "type": "module",
   "scripts": {
+    "start": "electron main.cjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "convert": "node scripts/convert.cjs",
-    "post:ig": "node scripts/post_ig.cjs"
+    "post:ig": "node scripts/post_ig.cjs",
+    "record": "electron scripts/record_electron.cjs"
   },
   "dependencies": {
     "phaser": "^3.80.1",
@@ -17,7 +19,10 @@
   },
   "devDependencies": {
     "dotenv": "^17.3.1",
+    "electron": "^40.6.1",
     "instagram-private-api": "^1.46.1",
-    "vite": "^5.0.0"
+    "puppeteer": "^24.37.5",
+    "vite": "^5.0.0",
+    "wait-on": "^9.0.4"
   }
 }

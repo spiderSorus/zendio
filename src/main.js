@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { RESOLUTION } from './core/Constants';
 import MenuScene from './scenes/MenuScene';
-import { AquarellePipeline, RainbowPipeline, OldGlassPipeline } from './pipelines/LetGoPipelines';
+import { AquarellePipeline, RainbowPipeline, OldGlassPipeline, SmokyFogPipeline } from './pipelines/LetGoPipelines';
 
 // Dynamically find all scenes
 const sceneModules = import.meta.glob('./scenes/*Scene.js', { eager: true });
@@ -20,7 +20,7 @@ const config = {
     width: RESOLUTION.WIDTH,
     height: RESOLUTION.HEIGHT,
     backgroundColor: '#1a1a2e',
-    pipeline: { AquarellePipeline, RainbowPipeline, OldGlassPipeline },
+    pipeline: { AquarellePipeline, RainbowPipeline, OldGlassPipeline, SmokyFogPipeline },
     scene: sceneList,
     scale: {
         mode: Phaser.Scale.FIT,

@@ -1,6 +1,7 @@
 export const LAYERS = {
     BACKGROUND: 'background',
     CONDENSING_TEXT: 'condensing_text',
+    FOG: 'fog',
     MIDGROUND: 'midground',
     FOREGROUND: 'foreground',
     UI: 'ui'

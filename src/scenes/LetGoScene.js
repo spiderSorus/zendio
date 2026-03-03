@@ -11,11 +11,10 @@ export default class LetGoScene extends BaseScene {
         this.worldH = 5000;
         this.driftX = 0;
         this.driftY = 0;
-        this.useWindchimes = false; // Disable generative audio
     }
 
     preload() {
-        this.load.audio('windchimes', 'audio/windchimes.wav');
+        this.load.audio('bg_audio', 'audio/windchimes.wav');
     }
 
     setupScene() {
@@ -27,23 +26,25 @@ export default class LetGoScene extends BaseScene {
         this.driftX = Math.cos(angle) * speed;
         this.driftY = Math.sin(angle) * speed;
 
-        // Play the loaded windchimes audio on first click
         this.input.once('pointerdown', () => {
-            if (!this.sound.get('windchimes')) {
-                const music = this.sound.add('windchimes', { loop: true });
+            if (!this.sound.get('bg_audio')) {
+                const music = this.sound.add('bg_audio', { loop: true });
                 music.play();
-                console.log("Playing windchimes.wav loop");
             }
         });
 
-        // Reset main camera
+        this.events.on('recording-start', () => {
+            const music = this.sound.get('bg_audio');
+            if (music) {
+                music.stop();
+                music.play();
+            }
+        });
+
         this.cameras.main.centerOn(0, 0);
         this.cameras.main.setZoom(1.0);
-
-        // Background Color management
         this.cameras.main.setBackgroundColor(0x00bbff);
 
-        // 1. Generate Complexity Background
         const bgResult = ComplexityBackground(this, {
             worldWidth: this.worldW,
             worldHeight: this.worldH
@@ -51,13 +52,10 @@ export default class LetGoScene extends BaseScene {
 
         this.cameraConfigs = bgResult.cameraConfigs;
 
-        // Configure background cameras
         this.cameraConfigs.forEach(cfg => {
             const cam = this.cameraManager.getCamera(cfg.layer);
             if (cam) {
                 cam.parallaxFactor = cfg.parallaxFactor || 1.0;
-                
-                // Apply Effects
                 const effects = Array.isArray(cfg.effect) ? cfg.effect : [cfg.effect];
                 effects.forEach(eff => {
                     if (eff === 'watercolor') {
@@ -75,35 +73,19 @@ export default class LetGoScene extends BaseScene {
             }
         });
 
-        // 2. Setup Condensing Text
+        // Setup Condensing Text
         this.condensingTextLayer = this.cameraManager.getLayer(LAYERS.CONDENSING_TEXT);
         this.condensingTextCam = this.cameraManager.getCamera(LAYERS.CONDENSING_TEXT);
-        this.condensingTextCam.parallaxFactor = 0.4; // "Middle" of backgrounds (0.1 to 0.74)
+        this.condensingTextCam.parallaxFactor = 0.4; 
         
-        // Enable Aquarelle effect for condensing text
         this.condensingTextCam.setPostPipeline('AquarellePipeline');
         this.condensingPipeline = this.condensingTextCam.getPostPipeline('AquarellePipeline');
 
-        this.condensingText = this.add.text(0, 0, '', {
-            fontSize: '80px',
-            fontFamily: 'Sedgwick Ave Display',
-            color: '#ffffff', 
-            align: 'center',
-            wordWrap: { width: width * 0.8 },
-            shadow: {
-                offsetX: 0,
-                offsetY: 0,
-                color: '#ffffff',
-                blur: 20,
-                stroke: false,
-                fill: true
-            }
-        }).setOrigin(0.5);
-        
-        this.condensingTextLayer.add(this.condensingText);
+        // Container for all letters
+        this.textContainer = this.add.container(0, 0);
+        this.condensingTextLayer.add(this.textContainer);
         this.condensingTextLayer.setDepth(1000); 
 
-        // Define the phases (8s each for 32s total)
         this.phases = [
             { start: 0, end: 8000, text: 'Soft breath in' },
             { start: 8000, end: 16000, text: 'Then out' },
@@ -111,61 +93,142 @@ export default class LetGoScene extends BaseScene {
             { start: 24000, end: 32000, text: 'Stillness finds you now' }
         ];
 
-        // 3. Final camera sort
+        this.currentText = '';
+        this.letterObjects = [];
+
         this.cameraManager.sortCameras();
+    }
+
+    updateTextLetters(newText) {
+        if (this.currentText === newText) return;
+        this.currentText = newText;
+
+        // Clear old letters
+        this.letterObjects.forEach(group => {
+            group.main.destroy();
+            group.shadows.forEach(s => s.destroy());
+        });
+        this.letterObjects = [];
+
+        if (!newText) return;
+
+        let totalWidth = 0;
+        const charData = [];
+        const rainbowColors = [0xff0000, 0xffa500, 0xffff00, 0x00ff00, 0x00ffff, 0x0000ff, 0x8b00ff];
+
+        for (let i = 0; i < newText.length; i++) {
+            const char = newText[i];
+            
+            if (char === ' ') {
+                totalWidth += 30; 
+                continue;
+            }
+
+            const colorRatio = i / Math.max(1, newText.length - 1);
+            const colorIndex = colorRatio * (rainbowColors.length - 1);
+            const lowIndex = Math.floor(colorIndex);
+            const highIndex = Math.ceil(colorIndex);
+            const frac = colorIndex - lowIndex;
+            
+            const color1 = Phaser.Display.Color.IntegerToColor(rainbowColors[lowIndex]);
+            const color2 = Phaser.Display.Color.IntegerToColor(rainbowColors[highIndex]);
+            const interpolated = Phaser.Display.Color.Interpolate.ColorWithColor(color1, color2, 100, frac * 100);
+            const colorStr = Phaser.Display.Color.ObjectToColor(interpolated).rgba;
+
+            const shadows = [];
+            const glows = [
+                { blur: 10, alpha: 0.8, scale: 1.02, thickness: 4 },
+                { blur: 30, alpha: 0.5, scale: 1.05, thickness: 8 },
+                { blur: 60, alpha: 0.3, scale: 1.10, thickness: 12 }
+            ];
+
+            glows.forEach(config => {
+                const s = this.add.text(0, 0, char, {
+                    fontSize: '80px',
+                    fontFamily: 'Caveat',
+                    fill: colorStr,
+                    stroke: colorStr,
+                    strokeThickness: config.thickness,
+                    shadow: {
+                        offsetX: 0, offsetY: 0,
+                        color: colorStr,
+                        blur: config.blur,
+                        stroke: true, fill: true
+                    }
+                }).setOrigin(0.5).setAlpha(config.alpha).setScale(config.scale);
+                shadows.push(s);
+            });
+
+            const main = this.add.text(0, 0, char, {
+                fontSize: '80px',
+                fontFamily: 'Caveat',
+                color: '#ffffff'
+            }).setOrigin(0.5);
+
+            const charWidth = main.width;
+            charData.push({ main, shadows, width: charWidth, offsetBefore: totalWidth });
+            totalWidth += charWidth;
+        }
+
+        const startX = -totalWidth / 2;
+
+        charData.forEach(data => {
+            const x = startX + data.offsetBefore + (data.width / 2);
+            data.main.x = x;
+            data.shadows.forEach(s => {
+                s.x = x;
+                this.textContainer.add(s);
+            });
+            this.textContainer.add(data.main);
+            this.letterObjects.push({ main: data.main, shadows: data.shadows });
+        });
     }
 
     update(time, delta) {
         const loopTime = time % LOOP_DURATION;
 
-        // Animate Text Fade and Effect
         const currentPhase = this.phases.find(p => loopTime >= p.start && loopTime < p.end);
         if (currentPhase) {
-            this.condensingText.setText(currentPhase.text);
+            this.updateTextLetters(currentPhase.text);
             
             const phaseProgress = (loopTime - currentPhase.start) / (currentPhase.end - currentPhase.start);
             
-            // Fade in and out within the phase (0-20% in, 80-100% out)
-            // Liquid effect Factor is the inverse of alpha (1.0 when alpha is 0.0, 0.0 when alpha is 1.0)
-            let alpha = 0;
-            let effectFactor = 1.0;
+            let alpha = 1.0;
+            let effectFactor = 0.0;
 
-            if (phaseProgress < 0.2) {
-                alpha = phaseProgress / 0.2; // Fade in
-                effectFactor = 1.0 - alpha;  // Liquid -> Solid
-            } else if (phaseProgress > 0.8) {
-                alpha = (1.0 - phaseProgress) / 0.2; // Fade out
-                effectFactor = 1.0 - alpha;  // Solid -> Liquid
-            } else {
-                alpha = 1.0;
-                effectFactor = 0.0; // Stay Solid
+            if (phaseProgress < 0.3) {
+                alpha = phaseProgress / 0.3; 
+                effectFactor = 1.0 - alpha; 
+            } else if (phaseProgress > 0.7) {
+                alpha = (1.0 - phaseProgress) / 0.3; 
+                effectFactor = 1.0 - alpha; 
             }
             
-            this.condensingText.setAlpha(alpha);
+            this.letterObjects.forEach(group => {
+                group.main.setAlpha(alpha);
+                group.shadows.forEach((s, i) => {
+                    const baseAlpha = [0.8, 0.5, 0.3][i];
+                    s.setAlpha(alpha * baseAlpha);
+                });
+            });
 
             if (this.condensingPipeline) {
                 this.condensingPipeline.amplitude = 0.05 * effectFactor; 
-                this.condensingPipeline.scale = effectFactor; // 0.0 when solid, up to 1.0 when liquid
+                this.condensingPipeline.scale = effectFactor; 
                 this.condensingPipeline.frequency = 8.0; 
             }
         } else {
-            this.condensingText.setAlpha(0);
+            this.updateTextLetters('');
         }
 
-        // Perfect looping circular drift starting at (0,0)
-        // Sin(0) = 0, so driftProgressX will be 0 at t=0 and t=LOOP_DURATION
         const driftProgressX = getLoopSin(time, LOOP_DURATION) * 200;
-        // Sin(0 + quarter) = 1, so we subtract 1 to start at 0
         const driftProgressY = (getLoopSin(time + LOOP_DURATION / 4, LOOP_DURATION) - 1.0) * 200;
-        
         this.cameras.main.scrollX = driftProgressX;
         this.cameras.main.scrollY = driftProgressY;
 
         this.parallaxSystem();
 
         const mainCam = this.cameras.main;
-
-        // Sync Condensing Text Camera (Scale and Rotation only, no Scroll to keep it static)
         if (this.condensingTextCam) {
             this.condensingTextCam.setZoom(mainCam.zoom);
             this.condensingTextCam.setRotation(mainCam.rotation);
@@ -190,32 +253,22 @@ export default class LetGoScene extends BaseScene {
 
         this.graphics.forEach(gfx => {
             if (!gfx.gameObject || !gfx.config.parallax) return;
-
             const factor = gfx.config.parallax;
             const basePos = { x: gfx.config.x, y: gfx.config.y };
-
             let rx = basePos.x + cam.scrollX * (1.0 - factor);
             let ry = basePos.y + cam.scrollY * (1.0 - factor);
-
             const centerX = cam.scrollX + cam.width / 2;
             const centerY = cam.scrollY + cam.height / 2;
-
             let dx = rx - centerX;
             let dy = ry - centerY;
-
             dx = ((dx + worldW / 2) % worldW);
             if (dx < 0) dx += worldW;
             dx -= worldW / 2;
-
             dy = ((dy + worldH / 2) % worldH);
             if (dy < 0) dy += worldH;
             dy -= worldH / 2;
-
-            const finalX = centerX + dx;
-            const finalY = centerY + dy;
-
-            gfx.gameObject.x = finalX;
-            gfx.gameObject.y = finalY;
+            gfx.gameObject.x = centerX + dx;
+            gfx.gameObject.y = centerY + dy;
         });
     }
 }

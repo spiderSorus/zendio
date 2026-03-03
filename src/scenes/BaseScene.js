@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { CameraManager } from '../camera/CameraManager';
 import { LAYERS, RESOLUTION } from '../core/Constants';
 import { VideoExporter } from '../utils/VideoExporter';
-import { globalAudio } from '../utils/WindchimeEngine';
 
 /**
  * BaseScene: A template for generative scenes with layering and export built-in.
@@ -29,13 +28,6 @@ export default class BaseScene extends Phaser.Scene {
 
         // UI Layer LAST (so its camera is on top)
         this.setupUI(width, height);
-
-        // Audio Activation (ensure it's started if not already)
-        this.input.once('pointerdown', () => {
-            if (this.useWindchimes !== false) {
-                globalAudio.start();
-            }
-        });
     }
 
     setupUI(width, height) {
@@ -79,6 +71,11 @@ export default class BaseScene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
 
+        // Cleanup graphics on scene shutdown
+        this.events.once('shutdown', () => {
+            this.graphics = [];
+        });
+
         // Start Recording with 'R' key
         this.input.keyboard.on('keydown-R', () => {
             if (!this.videoExporter.isRecording) {
@@ -96,12 +93,9 @@ export default class BaseScene extends Phaser.Scene {
     setupScene() {}
 
     update(time, delta) {
-        this.graphics.forEach(g => g.update(time, delta));
-        
-        // Update global audio engine if enabled
-        if (this.useWindchimes !== false) {
-            globalAudio.update(time);
-        }
+        this.graphics.forEach(gfx => {
+            if (gfx.update) gfx.update(time, delta);
+        });
 
         // Update timer if visible
         if (this.timerText && this.timerText.visible) {

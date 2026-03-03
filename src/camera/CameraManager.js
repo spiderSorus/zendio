@@ -58,6 +58,7 @@ export class CameraManager {
             if (name.includes('bg') || name.includes('background')) type = 'BACKGROUND';
             if (name.includes('ui')) type = 'UI';
             if (name.includes('text')) type = 'TEXT';
+            if (name.includes('fog')) type = 'FOG';
             if (name.includes('foreground')) type = 'FOREGROUND';
             
             this.cameraTypes.set(name, type);
@@ -72,6 +73,7 @@ export class CameraManager {
         const TYPE_ORDER = {
             'BACKGROUND': 0,
             'TEXT': 0, // Sort with backgrounds for depth
+            'FOG': 0,  // Interleave fog with backgrounds/text
             'MIDGROUND': 1,
             'FOREGROUND': 2,
             'UI': 3

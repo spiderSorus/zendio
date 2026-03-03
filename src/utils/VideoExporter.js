@@ -1,7 +1,7 @@
 import { LOOP_DURATION } from '../core/Constants';
 
 /**
- * VideoExporter: Captures the canvas and downloads it as a video.
+ * VideoExporter: Captures the canvas only and downloads it as a video.
  * Designed to capture exactly one loop.
  */
 export class VideoExporter {
@@ -20,12 +20,12 @@ export class VideoExporter {
         if (this.isRecording) return;
         
         const canvas = this.scene.game.canvas;
-        const stream = canvas.captureStream(60); // Capture at 60fps
+        const videoStream = canvas.captureStream(60); 
         
         this.recordedChunks = [];
-        this.mediaRecorder = new MediaRecorder(stream, {
+        this.mediaRecorder = new MediaRecorder(videoStream, {
             mimeType: 'video/webm;codecs=vp9',
-            videoBitsPerSecond: 25000000 // 25Mbps for high quality
+            videoBitsPerSecond: 25000000 
         });
 
         this.mediaRecorder.ondataavailable = (event) => {
@@ -38,25 +38,17 @@ export class VideoExporter {
             this.saveVideo();
         };
 
-        // Sync with the start of the loop
-        // We'll wait until the next loop start (time % LOOP_DURATION near 0)
-        // or just start now and cut later? 
-        // Better to wait for time % LOOP_DURATION === 0 to ensure seamless loop.
-        
         this.isRecording = true;
-        console.log("Waiting for loop start to begin recording...");
         
         const checkLoop = () => {
             const currentTime = this.scene.time.now;
             const progress = (currentTime % LOOP_DURATION) / LOOP_DURATION;
             
-            // If we are within 100ms of the start of the loop
-            if (progress < 0.01) {
-                this.mediaRecorder.start();
+            if (progress < 0.02) {
+                this.mediaRecorder.start(1000); 
                 this.recordingStartTime = currentTime;
-                console.log("Recording started at loop start.");
+                this.scene.events.emit('recording-start');
                 
-                // Set a timer to stop after exactly LOOP_DURATION
                 this.scene.time.delayedCall(LOOP_DURATION, () => {
                     this.stopRecording();
                 });
@@ -72,7 +64,6 @@ export class VideoExporter {
         if (!this.isRecording) return;
         this.mediaRecorder.stop();
         this.isRecording = false;
-        console.log("Recording finished.");
     }
 
     saveVideo() {
@@ -83,7 +74,8 @@ export class VideoExporter {
         a.style = 'display: none';
         a.href = url;
         const sceneName = this.scene.constructor.name;
-        a.download = `${sceneName}_${Date.now()}.webm`;
+        const fileName = `${sceneName}_${Date.now()}.webm`;
+        a.download = fileName;
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);

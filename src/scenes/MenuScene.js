@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { globalAudio } from '../utils/WindchimeEngine';
 
 export default class MenuScene extends Phaser.Scene {
     constructor() {
@@ -44,10 +43,6 @@ export default class MenuScene extends Phaser.Scene {
         this.input.keyboard.on('keydown-DOWN', () => this.scrollMenu(1));
         this.input.keyboard.on('keydown-ENTER', () => this.selectScene());
         this.input.on('wheel', (p, go, dx, dy) => this.scrollMenu(dy > 0 ? 1 : -1));
-
-        this.input.once('pointerdown', () => {
-            globalAudio.start();
-        });
 
         this.add.text(width / 2, height - 200, `UP/DOWN TO SCROLL
 ENTER TO START`, {
@@ -107,6 +102,6 @@ ENTER TO START`, {
     }
 
     update(time, delta) {
-        globalAudio.update(this.time.now);
+        // No global audio update needed
     }
 }

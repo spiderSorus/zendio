@@ -67,6 +67,8 @@ export class WatercolorGraphic extends BaseGraphic {
         if (!this.gameObject) return;
 
         this.blobs.forEach(blob => {
+            if (!blob.obj) return; // Safety check
+
             // Use getLoopSin with seed offset for seamless wobble
             const wobble = getLoopSin(time + blob.seed, LOOP_DURATION) * 2;
             
@@ -133,7 +135,7 @@ export class CloudTextGraphic extends BaseGraphic {
     create(config) {
         const style = {
             fontSize: config.fontSize || '64px',
-            fontFamily: config.fontFamily || 'Arial',
+            fontFamily: config.fontFamily || 'Caveat',
             color: config.color || '#ffffff',
             align: 'center'
         };
@@ -187,7 +189,7 @@ export class TextGraphic extends BaseGraphic {
     create(config) {
         const style = {
             fontSize: config.fontSize || '32px',
-            fontFamily: config.fontFamily || 'Arial',
+            fontFamily: config.fontFamily || 'Caveat',
             color: config.color || '#ffffff',
             align: 'center'
         };
