@@ -54,7 +54,7 @@ export class WatercolorGraphic extends BaseGraphic {
                 baseH: height * jitterScale,
                 baseR: radius * jitterScale,
                 shape: shape,
-                seed: Math.random() * 100,
+                seed: Math.random() * LOOP_DURATION, // Use LOOP_DURATION for seed phase
                 offsetX: blob.x,
                 offsetY: blob.y
             });
@@ -65,10 +65,10 @@ export class WatercolorGraphic extends BaseGraphic {
 
     onUpdate(time, delta) {
         if (!this.gameObject) return;
-        const t = time * 0.001;
 
         this.blobs.forEach(blob => {
-            const wobble = Math.sin(t + blob.seed) * 2;
+            // Use getLoopSin with seed offset for seamless wobble
+            const wobble = getLoopSin(time + blob.seed, LOOP_DURATION) * 2;
             
             if (blob.shape === 'rect' || blob.shape === 'oval') {
                 blob.obj.setSize(blob.baseW + wobble, blob.baseH + wobble);
@@ -76,8 +76,8 @@ export class WatercolorGraphic extends BaseGraphic {
                 blob.obj.setRadius(blob.baseR + wobble);
             }
 
-            blob.obj.x = blob.offsetX + Math.cos(t * 0.5 + blob.seed) * 3;
-            blob.obj.y = blob.offsetY + Math.sin(t * 0.5 + blob.seed) * 3;
+            blob.obj.x = blob.offsetX + getLoopCos(time * 0.5 + blob.seed, LOOP_DURATION) * 3;
+            blob.obj.y = blob.offsetY + getLoopSin(time * 0.5 + blob.seed, LOOP_DURATION) * 3;
         });
     }
 
@@ -141,7 +141,6 @@ export class CloudTextGraphic extends BaseGraphic {
         const container = this.scene.add.container(0, 0);
         this.layers = [];
 
-        // Create several layers of text with slight offsets and different opacities
         const layerCount = 6;
         for (let i = 0; i < layerCount; i++) {
             const t = this.scene.add.text(
@@ -152,12 +151,10 @@ export class CloudTextGraphic extends BaseGraphic {
             );
             t.setOrigin(0.5);
             
-            // Outer layers are more transparent and slightly larger
             const scale = 1 + (i * 0.05);
             t.setScale(scale);
             t.setAlpha((config.alpha || 0.6) * (1 - (i / layerCount) * 0.8));
             
-            // Add some blur-like effect by offsetting
             t.x += (Math.random() * 20 - 10) * (i / layerCount);
             t.y += (Math.random() * 20 - 10) * (i / layerCount);
 
@@ -166,8 +163,8 @@ export class CloudTextGraphic extends BaseGraphic {
                 obj: t,
                 baseX: t.x,
                 baseY: t.y,
-                seed: Math.random() * 100,
-                speed: 0.2 + Math.random() * 0.5
+                seed: Math.random() * LOOP_DURATION,
+                speedMult: 0.5 + Math.random() * 0.5
             });
         }
 
@@ -176,11 +173,10 @@ export class CloudTextGraphic extends BaseGraphic {
 
     onUpdate(time, delta) {
         if (!this.gameObject) return;
-        const t = time * 0.001;
 
         this.layers.forEach(layer => {
-            const wobbleX = Math.sin(t * layer.speed + layer.seed) * 4;
-            const wobbleY = Math.cos(t * layer.speed * 0.8 + layer.seed) * 4;
+            const wobbleX = getLoopSin(time * layer.speedMult + layer.seed, LOOP_DURATION) * 4;
+            const wobbleY = getLoopCos(time * layer.speedMult * 0.8 + layer.seed, LOOP_DURATION) * 4;
             layer.obj.x = layer.baseX + wobbleX;
             layer.obj.y = layer.baseY + wobbleY;
         });

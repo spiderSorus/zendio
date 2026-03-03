@@ -82,9 +82,15 @@ export const ComplexityBackground = (scene, config = {}) => {
         const pFactor = 0.1 + (i * 0.08); // Spread parallax from 0.1 to 0.74
 
         // Decrease alpha as we get to "higher" layers (higher i)
-        // Layer 0 (i=0) keeps 100% of t.a, Layer 8 (i=8) gets ~30%
-        const alphaScale = 1.0 - (i * 0.08);
-        const finalAlpha = t.a * alphaScale;
+        // Adjust scaling so the top layer (i = length-1) ends up at exactly 0.25 alpha
+        let finalAlpha;
+        if (i === layerTemplates.length - 1) {
+            finalAlpha = 0.25; // Top layer at exactly 25%
+        } else {
+            // Scale from 1.0 down to ~0.4 over the other layers, then applied to template alpha
+            const alphaScale = 1.0 - (i * 0.075); 
+            finalAlpha = t.a * alphaScale;
+        }
 
         generateBackgroundRectangles(scene, config, {
             count: Math.round(t.count * areaScale),

@@ -152,8 +152,11 @@ export default class LetGoScene extends BaseScene {
             this.condensingText.setAlpha(0);
         }
 
+        // Perfect looping circular drift starting at (0,0)
+        // Sin(0) = 0, so driftProgressX will be 0 at t=0 and t=LOOP_DURATION
         const driftProgressX = getLoopSin(time, LOOP_DURATION) * 200;
-        const driftProgressY = getLoopCos(time, LOOP_DURATION) * 200;
+        // Sin(0 + quarter) = 1, so we subtract 1 to start at 0
+        const driftProgressY = (getLoopSin(time + LOOP_DURATION / 4, LOOP_DURATION) - 1.0) * 200;
         
         this.cameras.main.scrollX = driftProgressX;
         this.cameras.main.scrollY = driftProgressY;
