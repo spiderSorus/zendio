@@ -10,7 +10,6 @@ export default class MainScene extends BaseScene {
     setupScene() {
         const { width, height } = this.scale;
 
-        // Background layer: Dark circle
         this.graphics.push(new CircleGraphic(this, {
             x: width * 0.3,
             y: height * 0.4,
@@ -19,7 +18,6 @@ export default class MainScene extends BaseScene {
             layer: LAYERS.BACKGROUND
         }));
 
-        // Midground layer: Bright circles
         for (let i = 0; i < 12; i++) {
             this.graphics.push(new CircleGraphic(this, {
                 x: width * 0.2 + (i * 80),
@@ -31,7 +29,6 @@ export default class MainScene extends BaseScene {
             }));
         }
 
-        // Foreground layer: Glowing circle
         this.graphics.push(new CircleGraphic(this, {
             x: width * 0.7,
             y: height * 0.6,

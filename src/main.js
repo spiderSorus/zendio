@@ -19,7 +19,7 @@ const config = {
     parent: 'game-container',
     width: RESOLUTION.WIDTH,
     height: RESOLUTION.HEIGHT,
-    backgroundColor: '#440044', // Bright purple to see the canvas clearly
+    backgroundColor: '#1a1a2e',
     pipeline: { AquarellePipeline, RainbowPipeline, OldGlassPipeline },
     scene: sceneList,
     scale: {

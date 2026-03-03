@@ -11,7 +11,6 @@ export class CircleGraphic extends BaseGraphic {
 
     onUpdate(time, delta) {
         if (this.gameObject) {
-            // Seamless circular motion
             const sin = getLoopSin(time, LOOP_DURATION);
             const cos = getLoopCos(time, LOOP_DURATION);
             
