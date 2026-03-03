@@ -1,5 +1,6 @@
 export const LAYERS = {
     BACKGROUND: 'background',
+    CONDENSING_TEXT: 'condensing_text',
     MIDGROUND: 'midground',
     FOREGROUND: 'foreground',
     UI: 'ui'

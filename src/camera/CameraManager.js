@@ -5,6 +5,7 @@ export class CameraManager {
         this.scene = scene;
         this.layers = new Map();
         this.cameras = new Map();
+        this.cameraTypes = new Map(); // Store type for each camera
     }
 
     /**
@@ -13,28 +14,12 @@ export class CameraManager {
      */
     setupLayers(layerNames) {
         const { width, height } = this.scene.scale;
-        const mainCam = this.scene.cameras.main;
 
-        layerNames.forEach((name, index) => {
-            // 1. Create a Container for each layer
-            const container = this.scene.add.container(0, 0);
-            container.setName(name);
-            this.layers.set(name, container);
-
-            // 2. Create a dedicated Camera for each layer
-            // The first few layers might use the main camera or we can create new ones for all
-            let cam;
-            if (name === 'ui') {
-                cam = this.scene.cameras.add(0, 0, width, height).setName('UICamera');
-            } else {
-                cam = this.scene.cameras.add(0, 0, width, height).setName(name + 'Camera');
-            }
-            
-            this.cameras.set(name, cam);
+        layerNames.forEach((name) => {
+            this.getLayer(name); // Use getLayer to ensure creation and isolation
         });
 
-        // 3. Configure Camera/Layer isolation
-        this.refreshIsolation();
+        this.sortCameras();
     }
 
     /**
@@ -44,10 +29,7 @@ export class CameraManager {
         const allLayers = Array.from(this.layers.values());
         const mainCam = this.scene.cameras.main;
 
-        // Main camera ignores everything that has a dedicated camera
-        const layersWithCameras = Array.from(this.layers.keys())
-            .map(name => this.layers.get(name));
-        
+        const layersWithCameras = Array.from(this.layers.values());
         mainCam.ignore(layersWithCameras);
 
         this.cameras.forEach((cam, layerName) => {
@@ -56,14 +38,10 @@ export class CameraManager {
             
             cam.setBackgroundColor('rgba(0,0,0,0)');
             cam.ignore(otherLayers);
-            
-            // If it's the UI camera, it should also ignore the default world (non-layered objects)
-            // But usually we want the main camera to handle non-layered objects.
         });
     }
 
     getLayer(name) {
-        // If layer doesn't exist, create it on the fly (useful for dynamic LetGo layers)
         if (!this.layers.has(name)) {
             const container = this.scene.add.container(0, 0);
             container.setName(name);
@@ -74,9 +52,43 @@ export class CameraManager {
             cam.setBackgroundColor('rgba(0,0,0,0)');
             this.cameras.set(name, cam);
             
+            // Assign type based on name
+            let type = 'MIDGROUND';
+            if (name.includes('bg') || name.includes('background')) type = 'BACKGROUND';
+            if (name.includes('ui')) type = 'UI';
+            if (name.includes('text')) type = 'TEXT';
+            if (name.includes('foreground')) type = 'FOREGROUND';
+            
+            this.cameraTypes.set(name, type);
+            
             this.refreshIsolation();
+            this.sortCameras();
         }
         return this.layers.get(name);
+    }
+
+    sortCameras() {
+        const TYPE_ORDER = {
+            'BACKGROUND': 0,
+            'MIDGROUND': 1,
+            'FOREGROUND': 2,
+            'TEXT': 3,
+            'UI': 4
+        };
+
+        // We need to sort the internal cameras array of Phaser
+        this.scene.cameras.cameras.sort((a, b) => {
+            if (a === this.scene.cameras.main) return -1;
+            if (b === this.scene.cameras.main) return 1;
+
+            const nameA = a.name.replace('Camera', '');
+            const nameB = b.name.replace('Camera', '');
+
+            const typeA = this.cameraTypes.get(nameA) || 'MIDGROUND';
+            const typeB = this.cameraTypes.get(nameB) || 'MIDGROUND';
+
+            return TYPE_ORDER[typeA] - TYPE_ORDER[typeB];
+        });
     }
 
     getCamera(name) {
