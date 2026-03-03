@@ -16,6 +16,9 @@ export default class BaseScene extends Phaser.Scene {
     create() {
         const { width, height } = RESOLUTION;
         
+        // Center the main camera on (0,0)
+        this.cameras.main.centerOn(0, 0);
+
         this.cameraManager = new CameraManager(this);
         this.cameraManager.setupLayers(Object.values(LAYERS));
         

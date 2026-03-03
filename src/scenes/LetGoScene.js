@@ -65,7 +65,7 @@ export default class LetGoScene extends BaseScene {
         this.condensingTextLayer = this.cameraManager.getLayer(LAYERS.CONDENSING_TEXT);
         this.condensingTextCam = this.cameraManager.getCamera(LAYERS.CONDENSING_TEXT);
         
-        this.condensingText = this.add.text(width / 2, height / 2, '', {
+        this.condensingText = this.add.text(0, 0, '', {
             fontSize: '80px',
             fontFamily: 'Sedgwick Ave Display',
             color: '#ffffff', // Back to white for better contrast troubleshooting

@@ -50,6 +50,7 @@ export class CameraManager {
             const { width, height } = this.scene.scale;
             const cam = this.scene.cameras.add(0, 0, width, height).setName(name + 'Camera');
             cam.setBackgroundColor('rgba(0,0,0,0)');
+            cam.centerOn(0, 0); // Center on (0,0)
             this.cameras.set(name, cam);
             
             // Assign type based on name

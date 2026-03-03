@@ -7,10 +7,9 @@ export default class SimpleTestScene extends BaseScene {
     }
 
     setupScene() {
-        const { width, height } = RESOLUTION;
         const midLayer = this.cameraManager.getLayer(LAYERS.MIDGROUND);
 
-        const testText = this.add.text(width / 2, height / 2, 'test', {
+        const testText = this.add.text(0, 0, 'test', {
             fontSize: '120px',
             fill: '#ffffff',
             fontFamily: 'monospace'
