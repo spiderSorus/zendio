@@ -49,8 +49,8 @@ export default class MenuScene extends Phaser.Scene {
             globalAudio.start();
         });
 
-        this.add.text(width / 2, height - 200, 'UP/DOWN TO SCROLL
-ENTER TO START', {
+        this.add.text(width / 2, height - 200, `UP/DOWN TO SCROLL
+ENTER TO START`, {
             fontSize: '40px',
             fill: '#ffffff',
             fontFamily: 'monospace',
