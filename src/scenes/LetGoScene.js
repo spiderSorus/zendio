@@ -11,6 +11,11 @@ export default class LetGoScene extends BaseScene {
         this.worldH = 5000;
         this.driftX = 0;
         this.driftY = 0;
+        this.useWindchimes = false; // Disable generative audio
+    }
+
+    preload() {
+        this.load.audio('windchimes', 'audio/windchimes.wav');
     }
 
     setupScene() {
@@ -21,6 +26,15 @@ export default class LetGoScene extends BaseScene {
         const speed = 0.3;
         this.driftX = Math.cos(angle) * speed;
         this.driftY = Math.sin(angle) * speed;
+
+        // Play the loaded windchimes audio on first click
+        this.input.once('pointerdown', () => {
+            if (!this.sound.get('windchimes')) {
+                const music = this.sound.add('windchimes', { loop: true });
+                music.play();
+                console.log("Playing windchimes.wav loop");
+            }
+        });
 
         // Reset main camera
         this.cameras.main.centerOn(0, 0);
@@ -64,25 +78,37 @@ export default class LetGoScene extends BaseScene {
         // 2. Setup Condensing Text
         this.condensingTextLayer = this.cameraManager.getLayer(LAYERS.CONDENSING_TEXT);
         this.condensingTextCam = this.cameraManager.getCamera(LAYERS.CONDENSING_TEXT);
+        this.condensingTextCam.parallaxFactor = 0.4; // "Middle" of backgrounds (0.1 to 0.74)
         
+        // Enable Aquarelle effect for condensing text
+        this.condensingTextCam.setPostPipeline('AquarellePipeline');
+        this.condensingPipeline = this.condensingTextCam.getPostPipeline('AquarellePipeline');
+
         this.condensingText = this.add.text(0, 0, '', {
             fontSize: '80px',
             fontFamily: 'Sedgwick Ave Display',
-            color: '#ffffff', // Back to white for better contrast troubleshooting
+            color: '#ffffff', 
             align: 'center',
             wordWrap: { width: width * 0.8 },
-            stroke: '#000000', // Added stroke for extra visibility
-            strokeThickness: 6
-        }).setOrigin(0.5).setScrollFactor(0);
+            shadow: {
+                offsetX: 0,
+                offsetY: 0,
+                color: '#ffffff',
+                blur: 20,
+                stroke: false,
+                fill: true
+            }
+        }).setOrigin(0.5);
         
         this.condensingTextLayer.add(this.condensingText);
         this.condensingTextLayer.setDepth(1000); 
 
-        // Define the phases
+        // Define the phases (8s each for 32s total)
         this.phases = [
-            { start: 0, end: 8000, text: 'Soft breath in, then out' },
-            { start: 8000, end: 16000, text: 'Leaves dancing on the breeze' },
-            { start: 16000, end: 24000, text: 'Stillness finds you now' }
+            { start: 0, end: 8000, text: 'Soft breath in' },
+            { start: 8000, end: 16000, text: 'Then out' },
+            { start: 16000, end: 24000, text: 'Leaves dancing on the breeze' },
+            { start: 24000, end: 32000, text: 'Stillness finds you now' }
         ];
 
         // 3. Final camera sort
@@ -92,11 +118,36 @@ export default class LetGoScene extends BaseScene {
     update(time, delta) {
         const loopTime = time % LOOP_DURATION;
 
-        // Static Text based on phase
+        // Animate Text Fade and Effect
         const currentPhase = this.phases.find(p => loopTime >= p.start && loopTime < p.end);
         if (currentPhase) {
             this.condensingText.setText(currentPhase.text);
-            this.condensingText.setAlpha(1.0);
+            
+            const phaseProgress = (loopTime - currentPhase.start) / (currentPhase.end - currentPhase.start);
+            
+            // Fade in and out within the phase (0-20% in, 80-100% out)
+            // Liquid effect Factor is the inverse of alpha (1.0 when alpha is 0.0, 0.0 when alpha is 1.0)
+            let alpha = 0;
+            let effectFactor = 1.0;
+
+            if (phaseProgress < 0.2) {
+                alpha = phaseProgress / 0.2; // Fade in
+                effectFactor = 1.0 - alpha;  // Liquid -> Solid
+            } else if (phaseProgress > 0.8) {
+                alpha = (1.0 - phaseProgress) / 0.2; // Fade out
+                effectFactor = 1.0 - alpha;  // Solid -> Liquid
+            } else {
+                alpha = 1.0;
+                effectFactor = 0.0; // Stay Solid
+            }
+            
+            this.condensingText.setAlpha(alpha);
+
+            if (this.condensingPipeline) {
+                this.condensingPipeline.amplitude = 0.05 * effectFactor; 
+                this.condensingPipeline.scale = effectFactor; // 0.0 when solid, up to 1.0 when liquid
+                this.condensingPipeline.frequency = 8.0; 
+            }
         } else {
             this.condensingText.setAlpha(0);
         }
@@ -111,9 +162,8 @@ export default class LetGoScene extends BaseScene {
 
         const mainCam = this.cameras.main;
 
-        // Sync Condensing Text Camera
+        // Sync Condensing Text Camera (Scale and Rotation only, no Scroll to keep it static)
         if (this.condensingTextCam) {
-            this.condensingTextCam.setScroll(mainCam.scrollX, mainCam.scrollY);
             this.condensingTextCam.setZoom(mainCam.zoom);
             this.condensingTextCam.setRotation(mainCam.rotation);
         }

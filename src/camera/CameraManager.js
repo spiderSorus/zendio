@@ -71,10 +71,10 @@ export class CameraManager {
     sortCameras() {
         const TYPE_ORDER = {
             'BACKGROUND': 0,
+            'TEXT': 0, // Sort with backgrounds for depth
             'MIDGROUND': 1,
             'FOREGROUND': 2,
-            'TEXT': 3,
-            'UI': 4
+            'UI': 3
         };
 
         // We need to sort the internal cameras array of Phaser
@@ -88,7 +88,17 @@ export class CameraManager {
             const typeA = this.cameraTypes.get(nameA) || 'MIDGROUND';
             const typeB = this.cameraTypes.get(nameB) || 'MIDGROUND';
 
-            return TYPE_ORDER[typeA] - TYPE_ORDER[typeB];
+            const orderA = TYPE_ORDER[typeA] ?? 1;
+            const orderB = TYPE_ORDER[typeB] ?? 1;
+
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+
+            // Within the same order, sort by parallaxFactor (lower is further back)
+            const pA = a.parallaxFactor ?? 0;
+            const pB = b.parallaxFactor ?? 0;
+            return pA - pB;
         });
     }
 

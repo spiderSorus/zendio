@@ -4,6 +4,7 @@ import BaseScene from './BaseScene';
 export default class SimpleTestScene extends BaseScene {
     constructor() {
         super('SimpleTestScene');
+        this.useWindchimes = false;
     }
 
     setupScene() {

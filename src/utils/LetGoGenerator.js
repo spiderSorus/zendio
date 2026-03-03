@@ -81,6 +81,11 @@ export const ComplexityBackground = (scene, config = {}) => {
         const layerName = `bg_shuffled_${i+1}`;
         const pFactor = 0.1 + (i * 0.08); // Spread parallax from 0.1 to 0.74
 
+        // Decrease alpha as we get to "higher" layers (higher i)
+        // Layer 0 (i=0) keeps 100% of t.a, Layer 8 (i=8) gets ~30%
+        const alphaScale = 1.0 - (i * 0.08);
+        const finalAlpha = t.a * alphaScale;
+
         generateBackgroundRectangles(scene, config, {
             count: Math.round(t.count * areaScale),
             parallax: pFactor,
@@ -89,7 +94,7 @@ export const ComplexityBackground = (scene, config = {}) => {
             widthRange: [t.s, t.s * 1.5],
             heightRange: [t.s, t.s * 1.5],
             color: t.color,
-            alpha: t.a,
+            alpha: finalAlpha,
             renderType: t.renderType,
             shape: t.shape,
             forceSquare: t.forceSquare || false

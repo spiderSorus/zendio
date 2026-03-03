@@ -6,7 +6,7 @@ export const LAYERS = {
     UI: 'ui'
 };
 
-export const LOOP_DURATION = 24000; // 24 seconds for a loop
+export const LOOP_DURATION = 32000; // 32 seconds for a loop
 
 export const RESOLUTION = {
     WIDTH: 1080,

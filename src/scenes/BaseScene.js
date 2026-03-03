@@ -32,7 +32,9 @@ export default class BaseScene extends Phaser.Scene {
 
         // Audio Activation (ensure it's started if not already)
         this.input.once('pointerdown', () => {
-            globalAudio.start();
+            if (this.useWindchimes !== false) {
+                globalAudio.start();
+            }
         });
     }
 
@@ -54,19 +56,6 @@ export default class BaseScene extends Phaser.Scene {
             recBtn.setAlpha(0.5);
         });
 
-        // Back button
-        const backBtn = this.add.text(50, 50, '← MENU', {
-            fontSize: '32px',
-            fill: '#ffffff',
-            fontFamily: 'monospace',
-            backgroundColor: '#00000088',
-            padding: 10
-        }).setInteractive({ useHandCursor: true });
-
-        backBtn.on('pointerdown', () => {
-            this.scene.start('MenuScene');
-        });
-
         // Timer
         this.timerText = this.add.text(width / 2, 50, '00:00.00', {
             fontSize: '48px',
@@ -84,7 +73,23 @@ export default class BaseScene extends Phaser.Scene {
             this.timerText.setVisible(newVisible);
         });
 
-        uiLayer.add([recBtn, backBtn, this.timerText]);
+        // Return to Menu with ESC key
+        this.input.keyboard.on('keydown-ESC', () => {
+            console.log('BaseScene: Returning to MenuScene');
+            this.scene.start('MenuScene');
+        });
+
+        // Start Recording with 'R' key
+        this.input.keyboard.on('keydown-R', () => {
+            if (!this.videoExporter.isRecording) {
+                console.log('BaseScene: Starting Recording via R key');
+                this.videoExporter.startRecording();
+                recBtn.setText('● RECORDING...');
+                recBtn.setAlpha(0.5);
+            }
+        });
+
+        uiLayer.add([recBtn, this.timerText]);
     }
 
     /** Override this in child classes */
@@ -92,8 +97,11 @@ export default class BaseScene extends Phaser.Scene {
 
     update(time, delta) {
         this.graphics.forEach(g => g.update(time, delta));
-        // Update global audio engine
-        globalAudio.update(time);
+        
+        // Update global audio engine if enabled
+        if (this.useWindchimes !== false) {
+            globalAudio.update(time);
+        }
 
         // Update timer if visible
         if (this.timerText && this.timerText.visible) {
