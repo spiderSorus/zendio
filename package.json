@@ -1,7 +1,8 @@
 {
   "name": "zendio",
   "version": "1.0.0",
-  "description": "Generative video loops with Phaser",
+  "description": "Deterministic generative audio-visual loop engine built with Phaser 3, Simplex Noise, Vite, and Electron.",
+  "license": "MIT",
   "main": "src/main.js",
   "type": "module",
   "scripts": {
